@@ -63,11 +63,26 @@ def main() -> None:
               f"({r.share_of_cost:.0%} of the queue cost)")
         print(f"      {r.remediation}")
     print(f"\n    These three are {rows[2].cumulative_cost_share:.0%} of the cost.")
-    print("    The first is a configuration change in the price-list export:")
+
+    rounding = next(r for r in rows if r.cause is Cause.PO_LINE_ROUNDING)
+    rank_by_cost = rows.index(rounding) + 1
+    rank_by_count = by_count.index(rounding) + 1
+    print("\n  THE CHEAPEST WIN")
+    print("  " + "-" * 78)
+    print(f"    po_line_rounding is #{rank_by_count} by COUNT "
+          f"({rounding.share_of_count:.0%} of the queue) and only "
+          f"#{rank_by_cost} by cost.")
+    print(f"    It is GBP {rounding.annual_cost:,.0f}/yr and "
+          f"{rounding.cost_per_exception:.0f} per exception - the cheapest")
+    print("    thing in the queue to handle, and the cheapest to eliminate:")
     print("    the contract price carries 4dp, the invoice rounds to 2dp, and")
     print("    on a 300-unit line that becomes a GBP 1.20 mismatch. The same")
     print("    root cause on a 3-unit line matches cleanly, which is exactly")
-    print("    why it has been hiding inside 'price dispute' for years.\n")
+    print("    why it has been hiding inside 'price dispute' for years.")
+    print(f"\n    Removing it clears {rounding.share_of_count:.0%} of the "
+          "queue volume for a configuration")
+    print("    change - which is a different decision from the cost ranking,")
+    print("    and both belong in front of the sponsor.\n")
 
 
 if __name__ == "__main__":
