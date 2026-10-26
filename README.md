@@ -6,7 +6,7 @@ Invoice exception analysis that assigns every failed three-way match exactly one
 
 ## Why
 
-Around 18% of supplier invoices fail three-way match (purchase order, goods receipt, invoice) and are cleared by hand. It is usually written off as a supplier data problem, but the categories in the typical analysis overlap: an invoice that is both short-delivered and mispriced lands in two buckets, the percentages add up to more than 100, and no single fix owns a bar on the chart. This project uses a mutually exclusive, exhaustive cause taxonomy and weights it by cost, so each bar maps to one costed remediation.
+Invoices that fail three-way match (purchase order, goods receipt, invoice) are cleared by hand, and exception analyses often attribute them all to supplier data quality. The categories in such analyses tend to overlap: an invoice that is both short-delivered and mispriced lands in two buckets, the percentages add up to more than 100, and no single fix owns a bar on the chart. This project uses a mutually exclusive, exhaustive cause taxonomy and weights it by cost, so each bar maps to one costed remediation. The demo runs on synthetic data with seeded cause rates (about 18% of lines fail the match), so the numbers below illustrate the method and are not measured from a real ledger.
 
 ## Features
 
@@ -50,7 +50,7 @@ python -m src.demo                        # generate data and print the report
 ```text
   400,000 invoice lines, 72,739 failed three-way match (18.2%).
 
-  Classifier agreement with a hand-labelled sample of 800: 99.6%
+  Classifier agreement with a generator-labelled sample of 800: 99.6%
   Unclassified: 0.00% (reported, not folded into 'other')
 
   cause                        count  % count   annual cost  % cost    cum
@@ -77,7 +77,7 @@ Costs are in GBP, annualised from a one-quarter log (x4). They come from the exp
 python -m unittest discover -s tests -v
 ```
 
-24 tests cover: exactly one cause per exception, unclassified below 3%, shares summing to one, at least 95% agreement with labels overall and for every cause, recovery of seeded rates, each precedence rule, the rounding versus price separation, and ordering of the Pareto by cost.
+24 tests cover: exactly one cause per exception, unclassified below 3%, shares summing to one, at least 95% agreement with the generator's labels overall and for every cause, recovery of seeded rates, each precedence rule, the rounding versus price separation, and ordering of the Pareto by cost.
 
 ## Project layout
 

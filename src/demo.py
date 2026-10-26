@@ -1,4 +1,4 @@
-"""The 60-second artefact: a cost-weighted Pareto with a costed fix per bar.
+"""Generate synthetic invoice data and print a cost-weighted Pareto with a remediation per cause.
 
 Run: python -m src.demo
 """
@@ -19,14 +19,14 @@ def main() -> None:
     rows = pareto(contexts, annualise=ANNUALISE)
 
     exceptions = sum(r.count for r in rows)
-    print("\n  P2PEXCEPTIONS - 'it's a supplier data problem'")
+    print("\n  p2pexceptions - invoice exception report (synthetic data)")
     print("  " + "=" * 78)
     print(f"  {INVOICES:,} invoice lines, {exceptions:,} failed three-way match "
           f"({exceptions / INVOICES:.1%}).\n")
 
     sample = validation_sample(cases, size=800)
     agreed = sum(1 for c in sample if classify(c.context) is c.true_cause)
-    print(f"  Classifier agreement with a hand-labelled sample of "
+    print(f"  Classifier agreement with a generator-labelled sample of "
           f"{len(sample)}: {agreed / len(sample):.1%}")
     unclassified = next(
         (r for r in rows if r.cause is Cause.UNCLASSIFIED), None)
@@ -52,11 +52,10 @@ def main() -> None:
     print(f"    {'#':<4}{'by count':<28}{'by cost':<28}")
     for i in range(min(4, len(rows))):
         print(f"    {i + 1:<4}{by_count[i].cause.value:<28}{rows[i].cause.value:<28}")
-    print("\n    Different orderings. Fixing the most FREQUENT cause is not the")
-    print("    same as fixing the most EXPENSIVE one, and the count-ranked")
-    print("    chart is the one usually presented.\n")
+    print("\n    The orderings differ: the most frequent cause is not the most")
+    print("    expensive one.\n")
 
-    print("  THE TOP THREE, WITH A COSTED FIX EACH")
+    print("  TOP THREE CAUSES BY COST, WITH REMEDIATION")
     print("  " + "-" * 78)
     for r in rows[:3]:
         print(f"    {r.cause.value}  -  GBP {r.annual_cost:,.0f}/yr "
@@ -67,22 +66,21 @@ def main() -> None:
     rounding = next(r for r in rows if r.cause is Cause.PO_LINE_ROUNDING)
     rank_by_cost = rows.index(rounding) + 1
     rank_by_count = by_count.index(rounding) + 1
-    print("\n  THE CHEAPEST WIN")
+    print("\n  PO LINE ROUNDING")
     print("  " + "-" * 78)
     print(f"    po_line_rounding is #{rank_by_count} by COUNT "
           f"({rounding.share_of_count:.0%} of the queue) and only "
           f"#{rank_by_cost} by cost.")
     print(f"    It is GBP {rounding.annual_cost:,.0f}/yr and "
-          f"{rounding.cost_per_exception:.0f} per exception - the cheapest")
-    print("    thing in the queue to handle, and the cheapest to eliminate:")
+          f"{rounding.cost_per_exception:.0f} per exception.")
+    print("    Cause:")
     print("    the contract price carries 4dp, the invoice rounds to 2dp, and")
     print("    on a 300-unit line that becomes a GBP 1.20 mismatch. The same")
-    print("    root cause on a 3-unit line matches cleanly, which is exactly")
-    print("    why it has been hiding inside 'price dispute' for years.")
+    print("    rounding on a 3-unit line matches cleanly, so it is easily")
+    print("    mistaken for a price dispute.")
     print(f"\n    Removing it clears {rounding.share_of_count:.0%} of the "
           "queue volume for a configuration")
-    print("    change - which is a different decision from the cost ranking,")
-    print("    and both belong in front of the sponsor.\n")
+    print("    change, which is a separate decision from the cost ranking.\n")
 
 
 if __name__ == "__main__":

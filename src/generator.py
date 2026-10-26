@@ -1,8 +1,9 @@
 """Procure-to-pay records with seeded exception causes at KNOWN rates,
-plus a hand-labelled validation sample.
+plus a generator-labelled validation sample.
 
-The hand labels are the point. Classifier agreement with a taxonomy it defined
-itself is circular; agreement with an independently recorded label is evidence.
+The labels are the cause the generator intended for each case, recorded
+independently of the classifier. Agreement with them checks the classifier
+against the seeded ground truth; it does not measure performance on real data.
 """
 
 from __future__ import annotations
@@ -32,7 +33,7 @@ SEEDED_RATES: dict[Cause, float] = {
 @dataclass(frozen=True)
 class LabelledCase:
     context: MatchContext
-    #: The cause the generator INTENDED. This is the hand label.
+    #: The cause the generator INTENDED. This is the seeded label.
     true_cause: Cause | None
 
 
@@ -112,7 +113,7 @@ def generate(
 def validation_sample(
     cases: list[LabelledCase], size: int = 400, seed: int = 7,
 ) -> list[LabelledCase]:
-    """A hand-labelled sample, stratified so rare causes are represented.
+    """A generator-labelled sample, stratified so rare causes are represented.
 
     A uniform random sample of 400 from a 400,000-row population contains
     roughly two no-PO cases, which is not enough to say anything about how

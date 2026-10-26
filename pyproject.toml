@@ -1,7 +1,7 @@
 [project]
 name = "p2pexceptions"
 version = "0.1.0"
-description = "Invoice exception analysis with a MECE cause taxonomy validated against hand labels, so the percentages actually mean something."
+description = "Invoice exception analysis with a MECE cause taxonomy validated against generator-seeded labels."
 requires-python = ">=3.11"
 dependencies = []
 

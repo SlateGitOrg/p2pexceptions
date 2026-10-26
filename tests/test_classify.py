@@ -23,7 +23,7 @@ class Base(unittest.TestCase):
 
 
 class TestMece(Base):
-    def test_MUTUALLY_EXCLUSIVE_exactly_one_cause_per_exception(self):
+    def test_mutually_exclusive_exactly_one_cause_per_exception(self):
         # `classify` returns a single Cause by construction, so the property
         # under test is that the taxonomy decides rather than falling through:
         # every exception must get a cause, and only one.
@@ -31,7 +31,7 @@ class TestMece(Base):
             cause = classify(case.context)
             self.assertIsInstance(cause, Cause)
 
-    def test_EXHAUSTIVE_the_unclassified_bucket_stays_below_three_percent(self):
+    def test_exhaustive_the_unclassified_bucket_stays_below_three_percent(self):
         unclassified = next(
             (r for r in self.rows if r.cause is Cause.UNCLASSIFIED), None)
         share = unclassified.share_of_count if unclassified else 0.0
@@ -41,7 +41,7 @@ class TestMece(Base):
             f"exceptions produces percentages that mean nothing",
         )
 
-    def test_the_unclassified_bucket_is_REPORTED_not_hidden(self):
+    def test_the_unclassified_bucket_is_reported_not_hidden(self):
         # If it exists at all it must appear in the Pareto with a remediation
         # that says "examine these by hand", never silently folded into
         # another bar.
@@ -61,18 +61,18 @@ class TestMece(Base):
         self.assertGreater(total_exceptions, INVOICES * 0.10)
 
 
-class TestAgreementWithHandLabels(Base):
-    def test_THE_VALIDATION_agreement_is_at_least_95_percent(self):
+class TestAgreementWithSeededLabels(Base):
+    def test_agreement_is_at_least_95_percent(self):
         agreed = sum(
             1 for c in self.sample if classify(c.context) is c.true_cause)
         agreement = agreed / len(self.sample)
         self.assertGreaterEqual(
             agreement, 0.95,
-            f"classifier agreed with the hand label on {agreement:.1%} of "
+            f"classifier agreed with the seeded label on {agreement:.1%} of "
             f"{len(self.sample)} cases",
         )
 
-    def test_agreement_holds_for_EVERY_cause_not_just_on_average(self):
+    def test_agreement_holds_for_every_cause_not_just_on_average(self):
         # An average hides a cause that is classified wrongly every time.
         by_cause: dict[Cause, list[bool]] = {}
         for c in self.sample:
@@ -126,7 +126,7 @@ class TestPrecedence(unittest.TestCase):
             inv=InvoiceLine("INV1", "SUP1", "PO1", 1, 10.0, 9.99, "S1"))
         self.assertIs(classify(ctx), Cause.GOODS_RECEIPT_MISSING)
 
-    def test_THE_KEY_SEPARATION_rounding_is_not_a_price_dispute(self):
+    def test_separation_rounding_is_not_a_price_dispute(self):
         # A 0.004/unit difference on a line of 300: GBP 1.20 total mismatch,
         # entirely explained by rounding a 4dp contract price to 2dp.
         po = PoLine("PO1", 1, 300.0, 5.00, "S1")
@@ -135,7 +135,7 @@ class TestPrecedence(unittest.TestCase):
             po, GoodsReceipt("PO1", 1, 300.0), False)
         self.assertIs(classify(ctx), Cause.PO_LINE_ROUNDING)
 
-    def test_the_SAME_rounding_on_a_small_line_is_not_even_an_exception(self):
+    def test_the_same_rounding_on_a_small_line_is_not_even_an_exception(self):
         # Identical root cause, immaterial total, so it matches cleanly. This
         # asymmetry is why the cause hides inside "price dispute".
         po = PoLine("PO1", 1, 3.0, 5.00, "S1")
@@ -162,7 +162,7 @@ class TestPrecedence(unittest.TestCase):
 
 
 class TestCostWeighting(Base):
-    def test_the_pareto_is_ordered_by_COST_not_by_count(self):
+    def test_the_pareto_is_ordered_by_cost_not_by_count(self):
         costs = [r.annual_cost for r in self.rows]
         self.assertEqual(costs, sorted(costs, reverse=True))
 

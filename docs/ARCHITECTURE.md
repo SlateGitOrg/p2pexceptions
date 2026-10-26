@@ -2,10 +2,11 @@
 
 ## Context
 
-About 18% of supplier invoice lines fail three-way match (purchase order,
-goods receipt, invoice) and land in an exception queue that is cleared by
-hand. The usual analysis buckets those exceptions with overlapping
-categories, so the percentages cannot be acted on. p2pexceptions assigns each
+Supplier invoice lines that fail three-way match (purchase order, goods
+receipt, invoice) land in an exception queue that is cleared by hand. A
+typical analysis buckets those exceptions with overlapping categories, so the
+percentages cannot be acted on. The demo data is synthetic, with seeded cause
+rates that give roughly 18% failing lines. p2pexceptions assigns each
 exception exactly one cause, validates that assignment against labelled
 cases, and weights the result by cost.
 

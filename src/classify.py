@@ -2,23 +2,17 @@
 
 The cause taxonomy lives here.
 
-Eighteen percent of supplier invoices fail three-way match. Everyone calls it
-"a supplier data problem", the remediation budget goes to a data-quality
-programme, and the rate does not move.
+Overlapping categories make exception analysis hard to act on: an invoice
+that is both short-delivered and mispriced lands in two buckets, the
+percentages add to more than 100, and no single fix owns a bar of the Pareto.
 
-The reason is that the categories in the usual analysis overlap. An invoice
-that is both short-delivered AND priced wrong lands in two buckets, the
-percentages add to more than 100, and the Pareto chart that comes out of it
-cannot be acted on because no single fix owns a bar.
-
-So the taxonomy here is MUTUALLY EXCLUSIVE and EXHAUSTIVE, enforced by
-construction and verified against a hand-labelled sample:
+The taxonomy here is mutually exclusive and exhaustive, enforced by
+construction and checked against a generator-labelled sample:
 
   - exclusive: causes are evaluated in a fixed precedence order and exactly
     one is assigned, so the percentages mean what they appear to mean;
   - exhaustive: anything unmatched lands in `unclassified`, which is REPORTED.
-    A taxonomy that quietly absorbs its failures into "other" is how these
-    analyses mislead.
+    Absorbing failures into "other" would hide classifier gaps.
 """
 
 from __future__ import annotations
