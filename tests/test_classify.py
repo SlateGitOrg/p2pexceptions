@@ -171,7 +171,7 @@ class TestCostWeighting(Base):
         by_count = [r.cause for r in sorted(self.rows, key=lambda r: -r.count)]
         self.assertNotEqual(
             by_cost, by_count,
-            "if they agree, cost-weighting adds nothing and the differentiator "
+            "if they agree, cost-weighting adds nothing and the cost ranking adds nothing "
             "is not demonstrated",
         )
 

@@ -1,6 +1,6 @@
 """Three-way match reconstruction and a MECE exception taxonomy.
 
-THE DIFFERENTIATOR LIVES HERE.
+The cause taxonomy lives here.
 
 Eighteen percent of supplier invoices fail three-way match. Everyone calls it
 "a supplier data problem", the remediation budget goes to a data-quality
@@ -192,7 +192,7 @@ def _has_any_discrepancy(ctx: MatchContext) -> bool:
 # Cost-weighted Pareto
 # ---------------------------------------------------------------------------
 
-@ dataclass(frozen=True)
+@dataclass(frozen=True)
 class ParetoRow:
     cause: Cause
     count: int

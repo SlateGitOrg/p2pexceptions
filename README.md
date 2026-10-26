@@ -1,136 +1,102 @@
 # p2pexceptions
 
-> Invoice exception analysis with a MECE cause taxonomy validated against hand labels, so the percentages actually mean something.
+Invoice exception analysis that assigns every failed three-way match exactly one cause, validates the assignment against labelled cases, and ranks causes by cost.
 
-`COMPACT` · **Business Analyst** · Intermediate · ~5 days · Manufacturing - procure-to-pay
+[![CI](https://github.com/SlateGitOrg/p2pexceptions/actions/workflows/ci.yml/badge.svg)](https://github.com/SlateGitOrg/p2pexceptions/actions/workflows/ci.yml)
 
-**Primary language:** SQL
-**Tags:** `procure-to-pay`, `dbt`, `sql`, `classification`, `pareto`, `root-cause`
+## Why
 
----
+Around 18% of supplier invoices fail three-way match (purchase order, goods receipt, invoice) and are cleared by hand. It is usually written off as a supplier data problem, but the categories in the typical analysis overlap: an invoice that is both short-delivered and mispriced lands in two buckets, the percentages add up to more than 100, and no single fix owns a bar on the chart. This project uses a mutually exclusive, exhaustive cause taxonomy and weights it by cost, so each bar maps to one costed remediation.
 
-> **Implementation note.** The catalogue specifies **SQL** for this
-> project and that remains the target. This repository ships a runnable
-> **Python** reference implementation of the core differentiator so the
-> behaviour is executable and tested today; port it to SQL as step one
-> of your own build.
+## Features
 
-## The problem
+- Three-way match reconstruction with tolerances held as named constants.
+- A classifier that assigns exactly one cause per exception using a fixed, documented precedence order.
+- An `unclassified` bucket that is always reported and tested to stay below 3%.
+- Cost weighting per exception: handling minutes plus late-payment risk.
+- A cost-weighted Pareto with a named remediation per cause, and a side-by-side ranking by count versus by cost.
+- A seeded synthetic procure-to-pay generator and a stratified labelled validation sample.
 
-Eighteen percent of supplier invoices fail three-way match and land in an exception queue that two people clear manually - roughly 400k a year in labour and late-payment penalties. Everyone calls it a supplier data problem, nobody has decomposed it, and so the remediation budget goes to a data-quality initiative that does not touch the actual causes.
+## Architecture
 
-## ⭐ The differentiator
-
-Classifies every exception into a **mutually exclusive, exhaustive (MECE) cause taxonomy validated against a hand-labelled sample**, then computes a cost-weighted Pareto. The recommendation becomes 'three PO-line rounding rules cause 41% of exceptions and are fixable in configuration', not 'improve data quality'. The MECE validation is what generic analyses skip - which is why their categories overlap and their percentages do not sum to anything meaningful.
-
-This is the sentence to lead with when someone asks you to walk through the
-project. Everything else in this repo exists to make it true and to prove it.
-
-## Data
-
-A documented synthetic procure-to-pay generator (purchase orders, goods receipts, invoices) with **seeded exception causes at known rates**, plus a hand-labelled validation sample for measuring classifier agreement.
-
-> No paid API key is required to run or demo this project. Where a paid
-> service would add value it is wired as an optional enhancement behind an
-> interface with an offline mock as the default implementation.
-
-## Stack
-
-- PostgreSQL, dbt with tests
-- Python for the classifier
-- Streamlit or an Excel export - the audience uses Excel, and that is fine
-- dbt tests + pytest
-
-## Core capabilities
-
-- Three-way-match reconstruction with tolerance rules held as configurable data
-- MECE cause classifier with an unclassified bucket that must stay below a stated threshold
-- Cost weighting per exception (handling minutes plus penalty exposure)
-- Supplier and PO-type segmentation with volume-adjusted rates
-- Fix-recommendation table with an estimated annual saving per fix
-
-## Repository layout
-
-```
-models/
-src/classify/
-validation/
-generator/
-tests/
-output/
+```mermaid
+flowchart LR
+  G["generator<br/>seeded PO, receipt, invoice records"] --> M["match context<br/>PO + receipt + invoice"]
+  M --> C["classify()<br/>fixed precedence order"]
+  C --> P["pareto()<br/>cost weighting + remediation"]
+  G --> V["validation_sample()<br/>stratified labelled cases"]
+  V --> A["agreement check<br/>per-cause accuracy"]
+  C --> A
+  P --> D["demo report"]
 ```
 
-## Build plan
+The generator plants each cause at a known rate and records the intended cause as the label. `classify()` evaluates a match context against the rules in precedence order and returns one cause. `pareto()` counts exceptions per cause, applies cost weights and attaches a remediation. More detail in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-1. Define the taxonomy on paper and test it for MECE-ness by hand on fifty real-looking exceptions before writing code.
-2. Reconstruct the three-way match with tolerances as data.
-3. Classifier, then agreement against hand labels.
-4. Cost weighting and the recommendation table last - that table is the deliverable.
+## Quick start
 
-## Testing strategy
-
-Assert classifier agreement with the hand-labelled sample is at least 95%. Assert categories are **mutually exclusive** - no invoice receives two causes - and **exhaustive**, with unclassified below 3%. Without those two assertions the Pareto chart is decoration.
-
-Tests assert **correctness**, not merely that the code runs. A green suite on
-this repo is a claim about behaviour under adversarial conditions; treat any
-test that would pass against a deliberately broken implementation as a bug in
-the test.
-
-## Quality & safety layer
-
-The unclassified bucket is always reported, never hidden. A taxonomy that quietly absorbs its failures into an 'other' category is how these analyses mislead.
-
-## Measurable outcome
-
-> A cost-weighted Pareto where the top three bars each carry a named, costed remediation - redirecting a data-quality programme to three configuration changes.
-
-State it in these terms — business units, not technical ones — in your CV
-bullet and in the first thirty seconds of describing the project.
-
-## Interview questions this project answers
-
-- **What does MECE mean and why does it matter here?**
-- **How did you validate the classification?**
-- **Why cost-weight the Pareto rather than count-weight it?**
-
-## What this deliberately is *not*
-
-- Not an OCR or invoice-capture project. It starts from structured records.
-
-
-## Run it now
+Requires Python 3.11+. There are no third-party dependencies.
 
 ```bash
-python -m unittest discover -s tests -v   # the suite
-python -m src.demo                        # the 60-second artefact
-```
-
-Requires Python 3.11+. The runnable core uses **only the standard
-library** (including `sqlite3`), so there is nothing to install.
-
-## Getting started
-
-```bash
-git clone <your-fork-url> p2pexceptions
+git clone https://github.com/SlateGitOrg/p2pexceptions.git
 cd p2pexceptions
-docker compose up -d
-python -m generator --invoices 400000
-dbt build
-python -m src.classify run
-pytest validation/               # MECE + 95% agreement
+python -m unittest discover -s tests -v   # run the test suite
+python -m src.demo                        # generate data and print the report
 ```
 
-Docker is supported but optional — every path above works on a plain
-Windows/macOS/Linux laptop without a cloud account.
+## Usage
 
-## Definition of done
+`python -m src.demo` generates 400,000 invoice lines (fixed seed), classifies the exceptions and prints the report. Trimmed output:
 
-- [ ] The differentiator above is implemented, and a test proves it
-- [ ] The measurable outcome is produced by a command anyone can run
-- [ ] `README` explains the one decision a generic version gets wrong
-- [ ] CI runs the full suite on every push and is green on `main`
-- [ ] A recruiter can see the headline artefact in under 60 seconds
+```text
+  400,000 invoice lines, 72,739 failed three-way match (18.2%).
 
-## Licence
+  Classifier agreement with a hand-labelled sample of 800: 99.6%
+  Unclassified: 0.00% (reported, not folded into 'other')
+
+  cause                        count  % count   annual cost  % cost    cum
+  price_off_contract           8,516    11.7%     2,450,905   25.5%    26%
+  quantity_short_delivery     11,765    16.2%     2,145,465   22.4%    48%
+  goods_receipt_missing        4,797     6.6%     1,365,418   14.2%    62%
+  quantity_over_delivery       7,017     9.6%     1,079,495   11.3%    73%
+  po_line_rounding            28,697    39.5%       983,733   10.3%    84%
+  ...
+```
+
+Costs are in GBP, annualised from a one-quarter log (x4). They come from the explicit assumptions in `src/classify.py`, not from real data.
+
+## How it works
+
+- **Precedence order.** Duplicate, no PO, missing receipt, short or over delivery, rounding, price off contract, tax code. The first rule that fires wins, which makes the taxonomy mutually exclusive; anything left is `unclassified`, which makes it exhaustive.
+- **Rounding versus price.** A unit-price difference of at most 0.005 is what rounding a 4dp contract price to 2dp produces. It is checked before price and treated as a price-list configuration issue. Matching is done on line total (tolerance 0.50), so the same drift is invisible on a small line and fails the match on a large one.
+- **Cost versus count.** `po_line_rounding` is the largest cause by count (39.5%) but only fifth by cost, while `price_off_contract` is third by count and first by cost. The report shows both rankings.
+- **Validation.** Agreement is measured against the generator's intended cause on a stratified sample, overall and per cause. Because the data is synthetic, this shows the rules are internally consistent, not that they hold on real ledgers.
+
+## Testing
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+24 tests cover: exactly one cause per exception, unclassified below 3%, shares summing to one, at least 95% agreement with labels overall and for every cause, recovery of seeded rates, each precedence rule, the rounding versus price separation, and ordering of the Pareto by cost.
+
+## Project layout
+
+```text
+src/
+  classify.py    taxonomy, precedence rules, cost model, Pareto
+  generator.py   synthetic records and labelled validation sample
+  demo.py        report
+tests/           unittest suite
+docs/            architecture notes
+```
+
+## Limitations
+
+- Data is synthetic; no ERP or database integration.
+- Cost constants (handling minutes, late-payment risk, penalty) are assumptions to be replaced with measured values.
+- An invoice with several problems is attributed only to the highest-precedence cause.
+- Python only; there is no SQL or dbt layer.
+
+## License
 
 MIT — see [LICENSE](LICENSE).
