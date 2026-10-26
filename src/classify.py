@@ -113,7 +113,7 @@ TOTAL_TOLERANCE = 0.50
 
 
 def classify(ctx: MatchContext) -> Cause:
-    """Assign EXACTLY ONE cause, in a fixed precedence order.
+    """Assign exactly one cause, in a fixed precedence order.
 
     The order is the policy. It is written down here rather than emerging from
     the order of `if` statements by accident, because it determines every
@@ -145,10 +145,10 @@ def classify(ctx: MatchContext) -> Cause:
     if quantity_delta < -QUANTITY_TOLERANCE:
         return Cause.QUANTITY_OVER_DELIVERY
 
-    # 5. Rounding is checked BEFORE price. A unit difference within rounding
+    # 5. Rounding is checked before price. A unit difference within rounding
     #    range is a configuration bug in the price-list export, not a
     #    commercial dispute - and conflating the two is precisely what buries
-    #    the single biggest FIXABLE cause inside "price dispute".
+    #    a fixable cause inside "price dispute".
     line_total_delta = abs(
         inv.quantity * inv.unit_price - po.quantity * po.unit_price)
     if 0 < unit_delta <= ROUNDING_UNIT_TOLERANCE and line_total_delta > TOTAL_TOLERANCE:
